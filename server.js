@@ -25,8 +25,8 @@ app.post("/api/exercise/new-user", urlencodedParser, ( req, res ) => {
 
   // add user to database
   userStore.push({
-    username: username,
-    _id: id
+    _id: id.toString(),
+    username: username
   })
 
   // return new user
