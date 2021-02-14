@@ -5,6 +5,10 @@ require('dotenv').config();
 const bodyParser = require("body-parser");
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
+// cosmos db
+const db = require("./db.js")
+db.createDb(); // create if required
+
 const userStore = [];
 const exerciseStore = [];
 
@@ -16,21 +20,27 @@ app.get('/', (_req, res) => {
 
 app.post("/api/exercise/new-user", urlencodedParser, ( req, res ) => {
 
-  const id = userStore.length+1;
-  const username = req.body.username
+  //const id = userStore.length+1;
+  //const username = req.body.username
 
-  // return error if user already exists
+  /* return error if user already exists
   if(userStore.find(x=> x.username==username))
     return res.json({error: "Username already taken"})
+*/
+  const createdUser = db.createUser(req.body.username);
 
+  /*
   // add user to database
   userStore.push({
     _id: id.toString(),
     username: username
   })
+*/
+  createdUser
+    .then(data => res.json(data))
 
   // return new user
-  res.json(userStore[id-1]);
+  //res.json(userStore[id-1]);
 });
 
 app.get("/api/exercise/users", ( _req, res )=> {
