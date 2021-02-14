@@ -41,6 +41,9 @@ app.get("/api/exercise/users", ( _req, res )=> {
 
 app.post("/api/exercise/add", urlencodedParser, ( req, res ) => {
   const userId = req.body.userId;
+  const duration = req.body.duration;
+  if(!Number(duration))
+    return res.json({ error: "Duration is not a valid number" })
 
   // check if id exists
   const idFound = db.doesIdExist(userId)
@@ -51,7 +54,6 @@ app.post("/api/exercise/add", urlencodedParser, ( req, res ) => {
     // set fields
     const username = user[0].username
     const description = req.body.description;
-    const duration = req.body.duration;
     let date = req.body.date;
 
     // if date is blank set to today

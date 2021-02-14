@@ -100,16 +100,16 @@ async function createExercise(id, username, description, duration, date) {
       userId: id, 
       username: username,
       description: description,
-      duration: duration,
+      duration: Number(duration),
       date: date,
       type: "exercise"
     });
     return {
       _id: createdItem.userId,
       username: createdItem.username,
-      description: createdItem.description,
+      date: createdItem.date,
       duration: createdItem.duration,
-      date: createdItem.date
+      description: createdItem.description
     };
   }
   catch(e) { console.log(e) }
