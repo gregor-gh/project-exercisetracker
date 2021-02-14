@@ -19,35 +19,16 @@ app.get('/', (_req, res) => {
 });
 
 app.post("/api/exercise/new-user", urlencodedParser, ( req, res ) => {
-
-  //const id = userStore.length+1;
-  //const username = req.body.username
-
-  /* return error if user already exists
-  if(userStore.find(x=> x.username==username))
-    return res.json({error: "Username already taken"})
-*/
+  //db.doesUserExist("test3");
+  // create user record in cosmos then return the id and username
   const createdUser = db.createUser(req.body.username);
-
-  /*
-  // add user to database
-  userStore.push({
-    _id: id.toString(),
-    username: username
-  })
-*/
-  createdUser
-    .then(data => res.json(data))
-
-  // return new user
-  //res.json(userStore[id-1]);
+  createdUser.then(data => res.json(data))
 });
 
 app.get("/api/exercise/users", ( _req, res )=> {
-  if(userStore.length===0) 
-    res.json({error: "No users exist"})
-  else
-    res.json(userStore);
+  // fetch all users from cosmos and return id and username
+  const userList = db.fetchUsers();
+  userList.then(data => res.json(data));
 });
 
 app.post("/api/exercise/add", urlencodedParser, ( req, res ) => {

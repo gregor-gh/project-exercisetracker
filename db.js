@@ -52,12 +52,37 @@ async function getNextId() {
 
 async function createUser(username) {
   try {
-    const { resource: createdItem } = await container.items.create({ username: username });
-    console.log("Created user " + createdItem.userId+ ", " + createdItem.username)
+    const { resource: createdItem } = await container.items.create({ username: username, type: "user" });
+    console.log("Created user " + createdItem.username)
     return { _id: createdItem.id, username: createdItem.username }
   }
   catch(e) { console.log(e) }
 }
+
+async function fetchUsers() {
+  const query = { query: "SELECT c.id as _id, c.username FROM c where c.type='user'" }
+  try {
+    const { resources: userList } = await container.items
+      .query(query)
+      .fetchAll();
+
+      return userList;
+  }
+  catch(e) { console.log(e) }
+}
+
+async function doesUserExist(username) {
+  try {
+    const query = { query: `SELECT c.id as _id, c.username FROM c where c.username='${username}'`}
+    const { resources: result } = await container.items
+      .query(query)
+      .fetchNext()
+    
+    console.log(result)
+  }
+  catch(e) { console.log(e) }
+}
+
 /*
 async function main() {
   
@@ -126,4 +151,4 @@ async function main() {
 //createUser("Bob");
 */
 
-module.exports = { createUser, createDb };
+module.exports = { createUser, createDb, fetchUsers, doesUserExist };
