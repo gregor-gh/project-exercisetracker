@@ -53,7 +53,6 @@ async function getNextId() {
 async function createUser(username) {
   try {
     const { resource: createdItem } = await container.items.create({ username: username, type: "user" });
-    console.log("Created user " + createdItem.username)
     return { _id: createdItem.id, username: createdItem.username }
   }
   catch(e) { console.log(e) }
@@ -73,15 +72,49 @@ async function fetchUsers() {
 
 async function doesUserExist(username) {
   try {
-    const query = { query: `SELECT c.id as _id, c.username FROM c where c.username='${username}'`}
-    const { resources: result } = await container.items
+    const query = { query: `SELECT c.id as _id, c.username FROM c where c.username='${username}' and c.type='user'`}
+    const { resources: userFound } = await container.items
       .query(query)
-      .fetchNext()
+      .fetchAll()
     
-    console.log(result)
+    return userFound;
   }
   catch(e) { console.log(e) }
 }
+
+async function doesIdExist(id) {
+  try {
+    const query = { query: `SELECT c.id, c.username FROM c where c.id='${id}' and c.type='user'`}
+    const { resources: idFound } = await container.items
+      .query(query)
+      .fetchAll()
+    
+    return idFound;
+  }
+  catch(e) { console.log(e) }
+}
+
+async function createExercise(id, username, description, duration, date) {
+  try {
+    const { resource : createdItem } = await container.items.create({ 
+      userId: id, 
+      username: username,
+      description: description,
+      duration: duration,
+      date: date,
+      type: "exercise"
+    });
+    return {
+      _id: createdItem.userId,
+      username: createdItem.username,
+      description: createdItem.description,
+      duration: createdItem.duration,
+      date: createdItem.date
+    };
+  }
+  catch(e) { console.log(e) }
+}
+
 
 /*
 async function main() {
@@ -151,4 +184,4 @@ async function main() {
 //createUser("Bob");
 */
 
-module.exports = { createUser, createDb, fetchUsers, doesUserExist };
+module.exports = { createUser, createDb, fetchUsers, doesUserExist, doesIdExist, createExercise };

@@ -19,10 +19,18 @@ app.get('/', (_req, res) => {
 });
 
 app.post("/api/exercise/new-user", urlencodedParser, ( req, res ) => {
-  //db.doesUserExist("test3");
-  // create user record in cosmos then return the id and username
-  const createdUser = db.createUser(req.body.username);
-  createdUser.then(data => res.json(data))
+  const username = req.body.username;
+  // check if user exists
+  const userFound = db.doesUserExist(username);
+  userFound.then(data => {
+    // if so return error
+    if(data.length!==0) 
+      return res.json({ error: "User already exists" })
+
+    // else create user and return id and username
+    const createdUser = db.createUser(username);
+    createdUser.then(data => res.json(data))
+  })
 });
 
 app.get("/api/exercise/users", ( _req, res )=> {
@@ -32,32 +40,27 @@ app.get("/api/exercise/users", ( _req, res )=> {
 });
 
 app.post("/api/exercise/add", urlencodedParser, ( req, res ) => {
-
   const userId = req.body.userId;
-  let username;
-  
-  //look up username
-  if(!userStore.find( x => x._id==userId))
-    return res.json({error: "User ID does not exist"});
-  else
-    username = userStore.find( x => x._id==userId).username;
 
-  const description = req.body.description;
-  const duration = req.body.duration;
-  let date = req.body.date;
+  // check if id exists
+  const idFound = db.doesIdExist(userId)
+  idFound.then(user => {
+    if(user.length===0)
+      return res.json({ error: "User does not exist" })
+    
+    // set fields
+    const username = user[0].username
+    const description = req.body.description;
+    const duration = req.body.duration;
+    let date = req.body.date;
 
-  if(date==="")
+    // if date is blank set to today
+    if(date==="")
     date = new Date();
-  
-  exerciseStore.push({
-    username: username,
-    _id: userId,
-    description: description,
-    duration: duration,
-    date: date
-  })
 
-  res.json(exerciseStore[exerciseStore.length-1])
+    const exercise = db.createExercise(userId,username,description,duration,date)
+    exercise.then( data => { res.json(data) })
+  });
 });
 
 app.get("/api/exercise/log", ( req, res ) => {
