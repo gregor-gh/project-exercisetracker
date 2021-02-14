@@ -107,7 +107,7 @@ async function createExercise(id, username, description, duration, date) {
     return {
       _id: createdItem.userId,
       username: createdItem.username,
-      date: createdItem.date,
+      date: new Date(createdItem.date).toDateString(),
       duration: createdItem.duration,
       description: createdItem.description
     };
