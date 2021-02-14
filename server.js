@@ -80,6 +80,9 @@ app.post("/api/exercise/add", urlencodedParser, ( req, res ) => {
 app.get("/api/exercise/log", ( req, res ) => {
   
   const userId=req.query.userId;
+  const from = req.query.from;
+  const to = req.query.to;
+  const limit = req.query.limit;
 
   const idFound = db.doesIdExist(userId)
   idFound.then(user => {
@@ -87,7 +90,7 @@ app.get("/api/exercise/log", ( req, res ) => {
       return res.json({ error: "User does not exist" })
   })
 
-  const log = db.fetchExercises(userId);
+  const log = db.fetchExercises(userId, from, to, limit);
   log.then( data => { res.json(data) });
 });
 

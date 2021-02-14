@@ -89,18 +89,43 @@ async function createExercise(id, username, description, duration, date) {
 }
 
 
-async function fetchExercises(id) {
-  
+async function fetchExercises(id, from, to, limit) {
+  // will store query data here to return to get request
   let dataToReturn;
+
+  // if a limit is specified then set a top x limit on for the log query
+  let selectLimit = "select";
+  if(Number(limit))
+    selectLimit+=" top "+limit
+
+  // if a from value is specified set a from predicate
+  let selectFrom = ""
+  if(new Date(from)!="Invalid Date")
+    selectFrom+=" and c.date>'"+from+"'"
+
+  // same for to value
+  let selectTo = ""
+  if(new Date(from)!="Invalid Date")
+    selectTo+=" and c.date<'"+to+"'"
+
   try {
     // first get promise for exercise count
-    const countQuery = { query : `SELECT c.userId, c.username, count(c.id) as exerciseCount FROM c where c.userId='${id}' and c.type='exercise' group by c.userId, c.username` }
+    const countQuery = { query : `
+    select c.userId, c.username, count(c.id) as exerciseCount 
+    FROM c 
+    where c.userId='${id}' and c.type='exercise' 
+    group by c.userId, c.username
+    ` }
     const { resources: countPromise } = await container.items
       .query(countQuery)
       .fetchAll()
 
     // then promise for exercise log
-    const logQuery = { query: `SELECT c.description, c.duration, c.date FROM c where c.userId='${id}' and c.type='exercise'` };
+    const logQuery = { query: `
+    ${selectLimit} c.description, c.duration, c.date 
+    FROM c 
+    where c.userId='${id}' and c.type='exercise'${selectFrom}${selectTo}
+    ` };
     const { resources: logPromise } = await container.items
       .query(logQuery)
       .fetchAll()
