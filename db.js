@@ -1,20 +1,8 @@
 require('dotenv').config();
-
-// @ts-check
-//  <ImportConfiguration>
 const CosmosClient = require("@azure/cosmos").CosmosClient;
 const config = require("./config");
 const dbContext = require("./databaseContext");
-//  </ImportConfiguration>
 
-//  <DefineNewItem>
-const newItem = {
-  id: "3",
-  category: "fun",
-  name: "Cosmos DB",
-  description: "Complete Cosmos DB Node.js Quickstart ⚡",
-  isComplete: false
-};
 
 // <CreateClientObjectDatabaseContainer>
 const { endpoint, key, databaseId, containerId } = config;
@@ -24,30 +12,11 @@ const client = new CosmosClient({ endpoint, key });
 const database = client.database(databaseId);
 const container = database.container(containerId);
 
+
 async function createDb() {
     // Make sure Tasks database is already setup. If not, create it.
     await dbContext.create(client, databaseId, containerId);
 }
-/*
-async function getNextId() {
-  const querySpec = {
-    query: "select max(c.id) as lastId from c"
-  }
-
-  //select last id 
-  try {
-    const { resources: lastId } = await container.items
-    .query(querySpec)
-    .fetchNext();
-
-    if(Number(lastId[0].lastId)===null)
-
-  // return lastid+1
-    return Number(lastId[0].lastId)+1
-  }
-  catch(e) { console.log(e) }
-}
-*/
 
 
 async function createUser(username) {
@@ -57,6 +26,7 @@ async function createUser(username) {
   }
   catch(e) { console.log(e) }
 }
+
 
 async function fetchUsers() {
   const query = { query: "SELECT c.id as _id, c.username FROM c where c.type='user'" }
@@ -70,6 +40,7 @@ async function fetchUsers() {
   catch(e) { console.log(e) }
 }
 
+
 async function doesUserExist(username) {
   try {
     const query = { query: `SELECT c.id as _id, c.username FROM c where c.username='${username}' and c.type='user'`}
@@ -82,6 +53,7 @@ async function doesUserExist(username) {
   catch(e) { console.log(e) }
 }
 
+
 async function doesIdExist(id) {
   try {
     const query = { query: `SELECT c.id, c.username FROM c where c.id='${id}' and c.type='user'`}
@@ -93,6 +65,7 @@ async function doesIdExist(id) {
   }
   catch(e) { console.log(e) }
 }
+
 
 async function createExercise(id, username, description, duration, date) {
   try {
@@ -116,6 +89,49 @@ async function createExercise(id, username, description, duration, date) {
 }
 
 
+async function fetchExercises(id) {
+  
+  let dataToReturn;
+  try {
+    // first get promise for exercise count
+    const countQuery = { query : `SELECT c.userId, c.username, count(c.id) as exerciseCount FROM c where c.userId='${id}' and c.type='exercise' group by c.userId, c.username` }
+    const { resources: countPromise } = await container.items
+      .query(countQuery)
+      .fetchAll()
+
+    // then promise for exercise log
+    const logQuery = { query: `SELECT c.description, c.duration, c.date FROM c where c.userId='${id}' and c.type='exercise'` };
+    const { resources: logPromise } = await container.items
+      .query(logQuery)
+      .fetchAll()
+    
+    // after resolving promises return data
+    dataToReturn = await Promise.all([ countPromise, logPromise ])
+      .then( data => {
+
+        // get username and count from first promise
+        const countNumber = Number(data[0][0].exerciseCount);
+        const username = data[0][0].username;
+
+        // get log from second promise
+        const exerciseLog = data[1];
+       
+        return {
+          _id: id,
+          username: username,
+          count: countNumber,
+          log: exerciseLog.map(x => { return {
+            description: x.description,
+            duration: Number(x.duration),
+            date: new Date(x.date).toDateString()
+          }})
+        }
+      })
+  }
+  catch(e) { console.log(e) }
+
+  return dataToReturn
+}
 /*
 async function main() {
   
@@ -184,4 +200,4 @@ async function main() {
 //createUser("Bob");
 */
 
-module.exports = { createUser, createDb, fetchUsers, doesUserExist, doesIdExist, createExercise };
+module.exports = { createUser, createDb, fetchUsers, doesUserExist, doesIdExist, createExercise, fetchExercises };

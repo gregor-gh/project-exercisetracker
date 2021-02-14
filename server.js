@@ -22,7 +22,9 @@ app.post("/api/exercise/new-user", urlencodedParser, ( req, res ) => {
   const username = req.body.username;
   // check if user exists
   const userFound = db.doesUserExist(username);
+
   userFound.then(data => {
+
     // if so return error
     if(data.length!==0) 
       return res.json({ error: "User already exists" })
@@ -41,6 +43,16 @@ app.get("/api/exercise/users", ( _req, res )=> {
 
 app.post("/api/exercise/add", urlencodedParser, ( req, res ) => {
   const userId = req.body.userId;
+  // return error if user is empty
+  if(userId==="")
+    return res.json({ error: "No user id specified" })
+
+  const description = req.body.description;
+  // return error if desc is blank
+  if(description==="")
+    return res.json({ error: "No description given" })
+
+  // return error if duration isn';t a number
   const duration = req.body.duration;
   if(!Number(duration))
     return res.json({ error: "Duration is not a valid number" })
@@ -53,49 +65,30 @@ app.post("/api/exercise/add", urlencodedParser, ( req, res ) => {
     
     // set fields
     const username = user[0].username
-    const description = req.body.description;
+    
     let date = req.body.date;
 
     // if date is blank set to today
     if(date==="")
     date = new Date();
 
-    const exercise = db.createExercise(userId,username,description,duration,date)
-    exercise.then( data => { res.json(data) })
+    const exercise = db.createExercise(userId,username,description,duration,date);
+    exercise.then( data => { res.json(data) });
   });
 });
 
 app.get("/api/exercise/log", ( req, res ) => {
-
-  // return full log if no user parameter
-  if(!req.query.userId)
-    return res.json({ count: exerciseStore.length});
   
   const userId=req.query.userId;
-  let username;
 
-  if(!userStore.find( x => x._id==userId))
-    res.json({error: "User ID does not exist"});
-  else
-    username = userStore.find( x => x._id==userId).username;
-
-  const activity = [];
-
-  exerciseStore.forEach(x=> {
-    if(x._id==userId) {
-      activity.push({
-        description: x.description,
-        duration: x.duration,
-        date: x.date
-      })
-    }
+  const idFound = db.doesIdExist(userId)
+  idFound.then(user => {
+    if(user.length===0)
+      return res.json({ error: "User does not exist" })
   })
 
-  res.json({
-    _id: userId,
-    username: username,
-    log: activity
-  });
+  const log = db.fetchExercises(userId);
+  log.then( data => { res.json(data) });
 });
 
 const listener = app.listen(process.env.PORT || 3000, () => {
